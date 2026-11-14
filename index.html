@@ -50,33 +50,57 @@ const photoPending=new Set();
 let shownCount=24;
 const photoUsed=new Set();
 const photoExclusions=/raid|insecticide|spray|pesticide|advertisement|logo|diagram|icon|cartoon|poster for|cover art|video game|screenshot|painting|drawing|coat of arms|packaging|advert|banner/i;
-async function loadProductPhoto(i){
-if(photoCache[i]!==null||photoPending.has(i))return;
-photoPending.add(i);
-try{
- const terms=photoTerms[i]||[products[i].en.toLowerCase()];
- for(const term of terms){
- const endpoint='https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&gsrsearch='+encodeURIComponent('intitle:'+term)+'&gsrlimit=20&prop=imageinfo&iiprop=url|mime&iiurlwidth=700&format=json&origin=*';
- const res=await fetch(endpoint);
- if(!res.ok)continue;
- const data=await res.json();
- const words=term.toLowerCase().split(/\s+/).filter(x=>x.length>2);
- const candidates=Object.values(data.query?.pages||{}).filter(p=>{
- const name=p.title.replace(/^File:/,'').replace(/[_-]/g,' ').toLowerCase();
- return !photoExclusions.test(name)&&/\.(jpg|jpeg|png|webp)$/i.test(name)&&words.every(w=>name.includes(w))&&p.imageinfo?.[0]?.thumburl&&p.imageinfo?.[0]?.width>=450;
- }).sort((a,b)=>(a.index??99)-(b.index??99));
- const chosen=candidates.find(p=>!photoUsed.has(p.imageinfo[0].thumburl));
- if(chosen){photoCache[i]=chosen.imageinfo[0].thumburl;photoUsed.add(photoCache[i]);break}
- }
-}catch(err){console.warn('Photo indisponible',i,err)}
-finally{
- if(photoCache[i]===null)photoCache[i]='';
- photoPending.delete(i);
- document.querySelectorAll('[data-photo-index="'+i+'"]').forEach(img=>{if(photoCache[i]){img.src=photoCache[i];img.hidden=false;img.nextElementSibling.style.display='none'}else{img.hidden=true;img.nextElementSibling.style.display='grid'}});
- if($('productDialog')?.open&&$('productTitle').textContent===(language==='fr'?products[i].fr:products[i].en)){
- $('productImage').src=photoCache[i]||'';$('productImage').hidden=!photoCache[i];$('productEmoji').style.display=photoCache[i]?'none':'grid';
- }
+// Photos Wikimedia Commons : recherche par objet, licence et attribution visibles.
+const photoCredits=Array(products.length).fill(null);
+const imageCatalog=Array(products.length).fill(null);
+function photoQuery(i){
+ const raw=(photoTerms[i]?.[0]||products[i].en).toLowerCase();
+ return raw.replace(/\b(official|compatible|wireless|portable|new|best|premium|professional|gaming|amazon|ninja|soundcore|iniu)\b/g,' ').replace(/\s+/g,' ').trim();
 }
+function stripTags(v){return String(v||'').replace(/<[^>]*>/g,' ').replace(/&amp;/g,'&').replace(/\s+/g,' ').trim().slice(0,120)}
+function photoCreditLink(i){
+ const c=photoCredits[i];return c?'<a href="'+c.page+'" target="_blank" rel="noopener noreferrer" style="font-size:10px;color:#64748b;text-decoration:underline">Photo : '+escapeHtml(c.author)+' · '+escapeHtml(c.license)+'</a>':'';
+}
+async function loadProductPhoto(i){
+ if(photoCache[i]!==null||photoPending.has(i))return;
+ photoPending.add(i);
+ try{
+  const queries=[photoQuery(i),...(photoTerms[i]||[]).slice(1)];
+  for(const term of queries){
+   const endpoint='https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&gsrsearch='+encodeURIComponent(term+' filetype:bitmap')+'&gsrlimit=30&prop=imageinfo&iiprop=url|size|extmetadata&iiurlwidth=700&format=json&origin=*';
+   const res=await fetch(endpoint);if(!res.ok)continue;
+   const data=await res.json();
+   const words=term.split(/\s+/).filter(w=>w.length>=4);
+   const matches=Object.values(data.query?.pages||{}).filter(p=>{
+    const name=p.title.replace(/^File:/,'').replace(/[_-]/g,' ').toLowerCase();
+    const meta=p.imageinfo?.[0]?.extmetadata||{};
+    const license=meta.LicenseShortName?.value||'';
+    const allowed=/^(CC0|CC BY(?:-SA)?(?: |$)|Public domain|PD)/i.test(license);
+    return !photoExclusions.test(name)&&/\.(jpe?g|png|webp)$/i.test(name)&&p.imageinfo?.[0]?.thumburl&&p.imageinfo[0].width>=450&&allowed&&words.some(w=>name.includes(w));
+   }).sort((x,y)=>(x.index??99)-(y.index??99));
+   const chosen=matches.find(p=>!photoUsed.has(p.title));
+   if(chosen){
+    const info=chosen.imageinfo[0],meta=info.extmetadata||{};
+    photoCache[i]=info.thumburl;photoUsed.add(chosen.title);
+    photoCredits[i]={page:info.descriptionurl||'https://commons.wikimedia.org/wiki/'+encodeURIComponent(chosen.title.replace(/ /g,'_')),author:stripTags(meta.Artist?.value||meta.Credit?.value||'Wikimedia Commons'),license:stripTags(meta.LicenseShortName?.value||'Licence libre')};
+    imageCatalog[i]={image:photoCache[i],...photoCredits[i]};
+    break;
+   }
+  }
+ }catch(err){console.warn('Photo indisponible',i,err)}
+ finally{
+  if(photoCache[i]===null)photoCache[i]='';
+  photoPending.delete(i);
+  document.querySelectorAll('[data-photo-index="'+i+'"]').forEach(img=>{
+   if(photoCache[i]){img.src=photoCache[i];img.hidden=false;img.nextElementSibling.style.display='none'}
+   else{img.hidden=true;img.nextElementSibling.style.display='grid'}
+   const credit=img.closest('.product-image, .product-media, .product-visual')?.querySelector('.photo-credit');
+   if(credit)credit.innerHTML=photoCreditLink(i);
+  });
+  if($('productDialog')?.open&&$('productTitle').textContent===(language==='fr'?products[i].fr:products[i].en)){
+   $('productImage').src=photoCache[i]||'';$('productImage').hidden=!photoCache[i];$('productEmoji').style.display=photoCache[i]?'none':'grid';
+  }
+ }
 }
 let photoObserver;function loadVisiblePhotos(){photoObserver?.disconnect();if(!('IntersectionObserver' in window)){document.querySelectorAll('[data-photo-index]').forEach(img=>loadProductPhoto(Number(img.dataset.photoIndex)));return}photoObserver=new IntersectionObserver(entries=>{for(const entry of entries){if(entry.isIntersecting){photoObserver.unobserve(entry.target);loadProductPhoto(Number(entry.target.dataset.photoIndex))}}},{rootMargin:'250px'});document.querySelectorAll('[data-photo-index]').forEach(img=>{const i=Number(img.dataset.photoIndex);if(photoCache[i]){img.src=photoCache[i];img.hidden=false;img.nextElementSibling.style.display='none'}else if(photoCache[i]===null)photoObserver.observe(img)})}
 const associateTag='shopiz04-21';
