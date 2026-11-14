@@ -65,6 +65,12 @@ function photoCreditLink(i){
  const c=photoCredits[i];return c?'<a href="'+c.page+'" target="_blank" rel="noopener noreferrer" style="font-size:10px;color:#64748b;text-decoration:underline">Photo : '+escapeHtml(c.author)+' · '+escapeHtml(c.license)+'</a>':'';
 }
 async function loadProductPhoto(i){
+ // Avoid misleading Wikimedia search results for generic gaming accessories.
+ if(['Casque gaming','Souris gaming'].includes(products[i]?.fr)){
+  photoCache[i]='';
+  document.querySelectorAll('[data-photo-index="'+i+'"]').forEach(img=>{img.hidden=true;img.nextElementSibling.style.display='grid'});
+  return;
+ }
  if(photoCache[i]!==null||photoPending.has(i))return;
  photoPending.add(i);
  try{
