@@ -94,16 +94,13 @@ const editorialPhotos={
 };
 async function loadProductPhoto(i){
  if(photoCache[i]!==null)return;
- const p=products[i];
- const photos=editorialPhotos[p.cat]||editorialPhotos.deals;
- const index=products.slice(0,i).filter(x=>x.cat===p.cat).length;
- const id=photos[index%photos.length];
- photoCache[i]='https://images.unsplash.com/'+id+'?auto=format&fit=crop&w=760&h=570&q=78';
+ // Each product receives its own labeled illustration rather than a recycled category stock photo.
+ photoCache[i]=productIllustration(i);
  document.querySelectorAll('[data-photo-index="'+i+'"]').forEach(img=>{
   img.src=photoCache[i];img.hidden=false;
   if(img.nextElementSibling)img.nextElementSibling.style.display='none';
  });
- if($('productDialog')?.open&&$('productTitle').textContent===(language==='fr'?p.fr:p.en)){
+ if($('productDialog')?.open&&$('productTitle').textContent===(language==='fr'?products[i].fr:products[i].en)){
   $('productImage').src=photoCache[i];$('productImage').hidden=false;$('productEmoji').style.display='none';
  }
 }
