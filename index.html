@@ -19,7 +19,7 @@ header{background:#ffffffed;backdrop-filter:blur(16px);border-bottom:1px solid #
 @media(max-width:900px){.products,.categories{grid-template-columns:repeat(2,minmax(0,1fr))}.hero{min-height:390px}.hero::before{background:linear-gradient(90deg,#081b3df5,#092a60b9),url('https://images.unsplash.com/photo-1498049794561-7780e7231661?auto=format&fit=crop&w=1000&q=80') center/cover}}
 @media(max-width:560px){.container{padding:0 16px}.nav{gap:8px;padding-top:12px;padding-bottom:12px}.hero{padding:43px 26px;min-height:360px;border-radius:20px}.hero h1{font-size:43px}.hero p{font-size:14px}.categories{gap:10px}.category{min-height:130px;padding:16px 12px}.products{gap:12px}.art{height:155px}.details{padding:13px}.details h3{font-size:14px;min-height:58px}.details p{font-size:12px}.buy{font-size:11px;padding:11px 6px}.sectionhead{margin-top:40px}.toolbar{padding:10px}.auth-actions{gap:5px}.auth-btn{font-size:11px;padding:9px}.lang{font-size:11px;padding:9px}}
 .product-dialog{border:0;padding:0;border-radius:23px;width:min(850px,calc(100% - 26px));max-height:90vh;box-shadow:0 25px 90px #07193670}.product-dialog::backdrop{background:#071936bb;backdrop-filter:blur(5px)}.product-modal{display:grid;grid-template-columns:43% 57%;position:relative;background:#fff}.product-modal>.auth-close{position:absolute;right:14px;top:14px;z-index:2}.product-modal-media{background:#eef3fa;min-height:370px;position:relative}.product-modal-media img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}.product-emoji{display:none;place-items:center;font-size:90px;height:100%}.product-modal-body{padding:42px 34px}.product-modal-body h2{font-family:Outfit,Arial,sans-serif;font-size:30px;line-height:1.15}.product-modal-body p{color:#596982;line-height:1.7}.product-info{background:#f5f8ff;border:1px solid #e5ecfa;border-radius:12px;padding:14px;margin:20px 0;font-size:13px;line-height:1.7;color:#526480}.product-modal-body .buy{padding:16px}.affiliate-note{font-size:12px}.details .view-details{width:100%;background:#f0f5ff;border:1px solid #d9e6ff;color:#255ee8;padding:11px;border-radius:10px;font-weight:800;cursor:pointer;margin:9px 0}.details .view-details:hover{background:#e3edff}@media(max-width:650px){.product-modal{grid-template-columns:1fr}.product-modal-media{min-height:200px;height:220px}.product-modal-body{padding:25px}.product-modal-body h2{font-size:25px}}
-.art::after{content:'PHOTO ILLUSTRATIVE';position:absolute;bottom:9px;left:9px;background:#101e36b8;color:#fff;font-size:9px;letter-spacing:.5px;border-radius:5px;padding:5px 7px}.product-modal-media::after{content:'Visuel illustratif';position:absolute;bottom:10px;left:10px;background:#101e36c9;color:white;padding:6px 9px;font-size:11px;border-radius:7px}.product .buy{background:#ff9853;color:#18283f}.product .buy:hover{background:#ffad72}
+.art::after{content:'PHOTO D’AMBIANCE · NON CONTRACTUELLE';position:absolute;bottom:10px;left:10px;right:10px;width:max-content;max-width:calc(100% - 20px);background:#101e36b8;color:#fff;font-size:9px;letter-spacing:.2px;border-radius:6px;padding:6px 8px;pointer-events:none}.product-modal-media::after{content:'Visuel illustratif';position:absolute;bottom:10px;left:10px;background:#101e36c9;color:white;padding:6px 9px;font-size:11px;border-radius:7px}.product .buy{background:#ff9853;color:#18283f}.product .buy:hover{background:#ffad72}
 .category{cursor:pointer}.category.active{border-color:#2563eb;background:#eef4ff}.sectionhead h2{font-weight:800}.products{align-items:stretch}.product{display:flex;flex-direction:column}.details{display:flex;flex:1;flex-direction:column}.details .view-details{margin-top:auto}.art-fallback{font-size:78px}
 .more-wrap{text-align:center;margin:28px 0 42px}#loadMore{background:#245be8;color:#fff;border:0;border-radius:13px;padding:15px 30px;font-weight:800;cursor:pointer}#loadMore[hidden]{display:none}.shopiz-value{margin:20px 0 28px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.shopiz-value>div{background:white;border:1px solid #e4eaf2;border-radius:15px;padding:17px;font-size:13px;line-height:1.6}.shopiz-value strong{display:block;font-size:15px;color:#152943}.product .details h3{min-height:42px}.shopiz-guide{border-top:1px solid #e8edf5;margin-top:12px;padding-top:12px;color:#53677f;font-size:12px;line-height:1.6}.shopiz-guide strong{color:#17223b}.shopiz-hint{font-size:11px;color:#64748b;margin:7px 0 10px}.product .buy{background:#ff9853!important;color:#14213d!important}.product .buy:hover{background:#ffab73!important}.shopiz-comparison{background:#edf4ff;border-radius:12px;padding:12px;margin:10px 0;font-size:12px;line-height:1.6;color:#334155}@media(max-width:650px){.shopiz-value{grid-template-columns:1fr}}
 .install-shopiz{border:1px solid #cbdaf9;background:#edf4ff;color:#153c88;padding:10px 13px;border-radius:12px;font-weight:800;cursor:pointer}.install-shopiz[hidden]{display:none}@media(max-width:500px){.install-shopiz{font-size:12px;padding:9px}}
@@ -81,32 +81,30 @@ function stripTags(v){return String(v||'').replace(/<[^>]*>/g,' ').replace(/&amp
 function photoCreditLink(i){
  const c=photoCredits[i];return c?'<a href="'+c.page+'" target="_blank" rel="noopener noreferrer" style="font-size:10px;color:#64748b;text-decoration:underline">Photo : '+escapeHtml(c.author)+' · '+escapeHtml(c.license)+'</a>':'';
 }
-const verifiedProductPhotos={
- 'Manette DualSense PS5':{file:'Playstation DualSense Controller.png',author:'Alex Cochrane',license:'Wikimedia Commons'},
- 'Aspirateur robot':{file:'XiaomiMiRobotVacuumCleanerRobot.jpg',author:'Raysonho',license:'CC0'}
+// Curated real-world lifestyle photographs: category illustrations, not exact product listings.
+// These are deliberately fixed URLs, never unverified keyword-search results.
+const editorialPhotos={
+ tech:['photo-1498049794561-7780e7231661','photo-1519389950473-47ba0277781c','photo-1518770660439-4636190af475'],
+ home:['photo-1556911220-bff31c812dba','photo-1484154218962-a197022b5858','photo-1556912167-f556f1f39fdf'],
+ auto:['photo-1503376780353-7e6692767b70','photo-1492144534655-ae79c964c9d7','photo-1489824904134-891ab64532f1'],
+ gaming:['photo-1535223289827-42f1e9919769','photo-1542751371-adc38448a05e','photo-1511512578047-dfb367046420'],
+ sport:['photo-1517836357463-d25dfeac3438','photo-1534438327276-14e5300c3a48','photo-1571019613454-1cb2f99b2d8b'],
+ pets:['photo-1583511655857-d19b40a7a54e','photo-1514888286974-6c03e2ca1dba','photo-1548199973-03cce0bbc87b'],
+ deals:['photo-1472851294608-062f824d29cc','photo-1542291026-7eec264c27ff','photo-1607082348824-0a96f2a4b9da']
 };
 async function loadProductPhoto(i){
- const verified=verifiedProductPhotos[products[i]?.fr];
- if(verified&&photoCache[i]===null){
-  photoCache[i]='https://commons.wikimedia.org/wiki/Special:FilePath/'+encodeURIComponent(verified.file)+'?width=700';
-  photoCredits[i]={page:'https://commons.wikimedia.org/wiki/File:'+encodeURIComponent(verified.file.replace(/ /g,'_')),author:verified.author,license:verified.license};
-  document.querySelectorAll('[data-photo-index="'+i+'"]').forEach(img=>{img.src=photoCache[i];img.hidden=false;if(img.nextElementSibling)img.nextElementSibling.style.display='none'});
-  return;
- }
- // Use an explicitly labelled product illustration instead of unverified search photos.
- // Keyword-only image matching can confuse a gaming mouse with an animal,
- // or a gaming headset with construction safety equipment.
  if(photoCache[i]!==null)return;
- photoCache[i]=productIllustration(i);
+ const p=products[i];
+ const photos=editorialPhotos[p.cat]||editorialPhotos.deals;
+ const index=products.slice(0,i).filter(x=>x.cat===p.cat).length;
+ const id=photos[index%photos.length];
+ photoCache[i]='https://images.unsplash.com/'+id+'?auto=format&fit=crop&w=760&h=570&q=78';
  document.querySelectorAll('[data-photo-index="'+i+'"]').forEach(img=>{
-  img.src=photoCache[i];
-  img.hidden=false;
+  img.src=photoCache[i];img.hidden=false;
   if(img.nextElementSibling)img.nextElementSibling.style.display='none';
  });
- if($('productDialog')?.open&&$('productTitle').textContent===(language==='fr'?products[i].fr:products[i].en)){
-  $('productImage').src=photoCache[i];
-  $('productImage').hidden=false;
-  $('productEmoji').style.display='none';
+ if($('productDialog')?.open&&$('productTitle').textContent===(language==='fr'?p.fr:p.en)){
+  $('productImage').src=photoCache[i];$('productImage').hidden=false;$('productEmoji').style.display='none';
  }
 }
 let photoObserver;function loadVisiblePhotos(){photoObserver?.disconnect();if(!('IntersectionObserver' in window)){document.querySelectorAll('[data-photo-index]').forEach(img=>loadProductPhoto(Number(img.dataset.photoIndex)));return}photoObserver=new IntersectionObserver(entries=>{for(const entry of entries){if(entry.isIntersecting){photoObserver.unobserve(entry.target);loadProductPhoto(Number(entry.target.dataset.photoIndex))}}},{rootMargin:'250px'});document.querySelectorAll('[data-photo-index]').forEach(img=>{const i=Number(img.dataset.photoIndex);if(photoCache[i]){img.src=photoCache[i];img.hidden=false;img.nextElementSibling.style.display='none'}else if(photoCache[i]===null)photoObserver.observe(img)})}
