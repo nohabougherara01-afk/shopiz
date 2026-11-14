@@ -81,7 +81,18 @@ function stripTags(v){return String(v||'').replace(/<[^>]*>/g,' ').replace(/&amp
 function photoCreditLink(i){
  const c=photoCredits[i];return c?'<a href="'+c.page+'" target="_blank" rel="noopener noreferrer" style="font-size:10px;color:#64748b;text-decoration:underline">Photo : '+escapeHtml(c.author)+' · '+escapeHtml(c.license)+'</a>':'';
 }
+const verifiedProductPhotos={
+ 'Manette DualSense PS5':{file:'Playstation DualSense Controller.png',author:'Alex Cochrane',license:'Wikimedia Commons'},
+ 'Aspirateur robot':{file:'XiaomiMiRobotVacuumCleanerRobot.jpg',author:'Raysonho',license:'CC0'}
+};
 async function loadProductPhoto(i){
+ const verified=verifiedProductPhotos[products[i]?.fr];
+ if(verified&&photoCache[i]===null){
+  photoCache[i]='https://commons.wikimedia.org/wiki/Special:FilePath/'+encodeURIComponent(verified.file)+'?width=700';
+  photoCredits[i]={page:'https://commons.wikimedia.org/wiki/File:'+encodeURIComponent(verified.file.replace(/ /g,'_')),author:verified.author,license:verified.license};
+  document.querySelectorAll('[data-photo-index="'+i+'"]').forEach(img=>{img.src=photoCache[i];img.hidden=false;if(img.nextElementSibling)img.nextElementSibling.style.display='none'});
+  return;
+ }
  // Use an explicitly labelled product illustration instead of unverified search photos.
  // Keyword-only image matching can confuse a gaming mouse with an animal,
  // or a gaming headset with construction safety equipment.
