@@ -93,14 +93,35 @@ const editorialPhotos={
  deals:['photo-1472851294608-062f824d29cc','photo-1542291026-7eec264c27ff','photo-1607082348824-0a96f2a4b9da']
 };
 async function loadProductPhoto(i){
- if(photoCache[i]!==null)return;
- // Each product receives its own labeled illustration rather than a recycled category stock photo.
- photoCache[i]=productIllustration(i);
+ if(photoCache[i]!==null || photoPending.has(i))return;
+ photoPending.add(i);
+ const p=products[i];
+ // Search Commons for a real photograph of the named item, not a reused category picture.
+ const terms=[photoQuery(i),p.en.replace(/[^a-zA-Z0-9 ]/g,' ').split(' ').slice(0,4).join(' ')].filter(Boolean);
+ let chosen=null;
+ for(const term of [...new Set(terms)]){
+  try{
+   const params=new URLSearchParams({action:'query',format:'json',origin:'*',generator:'search',gsrsearch:'filetype:bitmap '+term,gsrnamespace:'6',gsrlimit:'12',prop:'imageinfo',iiprop:'url|extmetadata',iiurlwidth:'760'});
+   const response=await fetch('https://commons.wikimedia.org/w/api.php?'+params.toString(),{mode:'cors'});
+   if(!response.ok)continue;
+   const data=await response.json();
+   const entries=Object.values(data.query?.pages||{}).filter(x=>x.imageinfo?.[0]?.thumburl&&/\.(jpe?g|png|webp)$/i.test(x.title||'')&&!photoExclusions.test(x.title||''));
+   const unique=entries.find(x=>!photoUsed.has(x.imageinfo[0].url));
+   if(unique){chosen=unique;break}
+  }catch(err){/* Keep the product card usable when photo search is unavailable. */}
+ }
+ photoPending.delete(i);
+ if(!chosen){photoCache[i]='';return}
+ const info=chosen.imageinfo[0],meta=info.extmetadata||{};
+ photoUsed.add(info.url);
+ photoCache[i]=info.thumburl;
+ photoCredits[i]={page:info.descriptionurl||'https://commons.wikimedia.org/',author:stripTags(meta.Artist?.value)||'Wikimedia Commons',license:stripTags(meta.LicenseShortName?.value)||'Voir la licence'};
  document.querySelectorAll('[data-photo-index="'+i+'"]').forEach(img=>{
   img.src=photoCache[i];img.hidden=false;
+  img.title='Photo illustrative : '+p.fr+' — '+photoCredits[i].author;
   if(img.nextElementSibling)img.nextElementSibling.style.display='none';
  });
- if($('productDialog')?.open&&$('productTitle').textContent===(language==='fr'?products[i].fr:products[i].en)){
+ if($('productDialog')?.open&&$('productTitle').textContent===(language==='fr'?p.fr:p.en)){
   $('productImage').src=photoCache[i];$('productImage').hidden=false;$('productEmoji').style.display='none';
  }
 }
