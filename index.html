@@ -95,35 +95,32 @@ const editorialPhotos={
 async function loadProductPhoto(i){
  if(photoCache[i]!==null || photoPending.has(i))return;
  photoPending.add(i);
- const p=products[i];
- // Search Commons for a real photograph of the named item, not a reused category picture.
- const terms=[photoQuery(i),p.en.replace(/[^a-zA-Z0-9 ]/g,' ').split(' ').slice(0,4).join(' ')].filter(Boolean);
- let chosen=null;
- for(const term of [...new Set(terms)]){
-  try{
-   const params=new URLSearchParams({action:'query',format:'json',origin:'*',generator:'search',gsrsearch:'filetype:bitmap '+term,gsrnamespace:'6',gsrlimit:'12',prop:'imageinfo',iiprop:'url|extmetadata',iiurlwidth:'760'});
-   const response=await fetch('https://commons.wikimedia.org/w/api.php?'+params.toString(),{mode:'cors'});
-   if(!response.ok)continue;
+ // Do not guess from category or broad keyword searches: they produced wrong pictures.
+ // Display only individually checked, product-specific photographs from the catalogue.
+ try{
+  if(!window.shopizVerifiedImages){
+   const response=await fetch('catalogue-images.json',{cache:'no-store'});
+   if(!response.ok)throw Error('Catalogue indisponible');
    const data=await response.json();
-   const entries=Object.values(data.query?.pages||{}).filter(x=>x.imageinfo?.[0]?.thumburl&&/\.(jpe?g|png|webp)$/i.test(x.title||'')&&!photoExclusions.test(x.title||''));
-   const unique=entries.find(x=>!photoUsed.has(x.imageinfo[0].url));
-   if(unique){chosen=unique;break}
-  }catch(err){/* Keep the product card usable when photo search is unavailable. */}
- }
- photoPending.delete(i);
- if(!chosen){photoCache[i]='';return}
- const info=chosen.imageinfo[0],meta=info.extmetadata||{};
- photoUsed.add(info.url);
- photoCache[i]=info.thumburl;
- photoCredits[i]={page:info.descriptionurl||'https://commons.wikimedia.org/',author:stripTags(meta.Artist?.value)||'Wikimedia Commons',license:stripTags(meta.LicenseShortName?.value)||'Voir la licence'};
- document.querySelectorAll('[data-photo-index="'+i+'"]').forEach(img=>{
-  img.src=photoCache[i];img.hidden=false;
-  img.title='Photo illustrative : '+p.fr+' — '+photoCredits[i].author;
-  if(img.nextElementSibling)img.nextElementSibling.style.display='none';
- });
- if($('productDialog')?.open&&$('productTitle').textContent===(language==='fr'?p.fr:p.en)){
-  $('productImage').src=photoCache[i];$('productImage').hidden=false;$('productEmoji').style.display='none';
- }
+   window.shopizVerifiedImages=data.products||[];
+  }
+  const record=window.shopizVerifiedImages[i];
+  if(!record || record.status!=='vérifié' || !record.image || !record.source || !record.license){
+   photoCache[i]='';
+   return;
+  }
+  photoCache[i]=record.image;
+  photoCredits[i]={page:record.source,author:record.author||'Source',license:record.license};
+  document.querySelectorAll('[data-photo-index="'+i+'"]').forEach(img=>{
+   img.src=record.image;img.hidden=false;
+   if(img.nextElementSibling)img.nextElementSibling.style.display='none';
+   img.onerror=()=>{img.hidden=true;if(img.nextElementSibling)img.nextElementSibling.style.display='grid'};
+  });
+  if($('productDialog')?.open&&$('productTitle').textContent===(language==='fr'?products[i].fr:products[i].en)){
+   $('productImage').src=record.image;$('productImage').hidden=false;$('productEmoji').style.display='none';
+  }
+ }catch(e){photoCache[i]=''}
+ finally{photoPending.delete(i)}
 }
 let photoObserver;function loadVisiblePhotos(){photoObserver?.disconnect();if(!('IntersectionObserver' in window)){document.querySelectorAll('[data-photo-index]').forEach(img=>loadProductPhoto(Number(img.dataset.photoIndex)));return}photoObserver=new IntersectionObserver(entries=>{for(const entry of entries){if(entry.isIntersecting){photoObserver.unobserve(entry.target);loadProductPhoto(Number(entry.target.dataset.photoIndex))}}},{rootMargin:'250px'});document.querySelectorAll('[data-photo-index]').forEach(img=>{const i=Number(img.dataset.photoIndex);if(photoCache[i]){img.src=photoCache[i];img.hidden=false;img.nextElementSibling.style.display='none'}else if(photoCache[i]===null)photoObserver.observe(img)})}
 const associateTag='shopiz04-21';
